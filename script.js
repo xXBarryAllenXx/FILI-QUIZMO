@@ -1,78 +1,84 @@
-// Navigate to sectionId by toggling 'active' class on <section> elements
-function showSection(sectionId) {
-  const sections = document.querySelectorAll("section");
-  sections.forEach(section => {
-    section.classList.toggle("active", section.id === sectionId);
-  });
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// FIREBASE CONFIGURATION (Replace with your actual keys)
+const firebaseConfig = {
+    apiKey: "AIzaSyABVywx4CfeObPzrLE13QxQF6XCfh-t-Rw",
+  authDomain: "fili-quizmo.firebaseapp.com",
+  projectId: "fili-quizmo",
+  storageBucket: "fili-quizmo.firebasestorage.app",
+  messagingSenderId: "302906286199",
+  appId: "1:302906286199:web:5d74dd9af4868922dd6672",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// NAVIGATION
+window.showSection = (id) => {
+    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+//FOR RESPONSIVE SIDEBAR
+window.showSideBar = () => {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.style.display = 'flex';
 }
 
-// Navigate back to Home
-function goHome() {
-  showSection('home');
+window.hideSideBar = () => {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.style.display = 'none';
 }
 
-//Navigate to Admin Settings
-function adminSettings() {
-  showSection('adminSettings');
-}
+window.goHome = () => showSection('home');
 
-//Navigate to Teacher Settings
-function teacherSettings() {
-  showSection('teacherSettings');
-}
+window.scrollToSection = (id) => {
+    showSection('home');
+    setTimeout(() => {
+        document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+};
 
-// For keyboard accessibility on feature cards
-function handleKeyPress(event, sectionId) {
-  if(event.key === 'Enter' || event.key === ' ') {
-    showSection(sectionId);
-    event.preventDefault();
-  }
-}
+// LOGIN LOGIC (Diretso Pasok)
+window.handleLogin = async (role) => {
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('password').value;
 
-// Example email verification button functions
-function emailVerification() {
-  alert('Email verification initiated.');
-}
+    if (!email || !pass) return alert("Pakilagay ang email at password.");
 
-function emailVerified() {
-  alert('Email successfully verified.');
-}
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        // "Diretsyong pasok" logic base sa role
+        showSection(role); 
+    } catch (error) {
+        alert("Login Error: " + error.message);
+    }
+};
 
-// Login as Admin - simple simulation
-function loginAdmin() {
-  const username = document.getElementById('username').value.trim();
-  if(username === '') {
-    alert('Please enter your username to login as Admin.');
-    return;
-  }
-  alert('Logged in as Admin: ' + username);
-  showSection('admin');
-}
+// SIGNUP & VERIFICATION
+window.emailVerification = async () => {
+    const email = document.getElementById('regEmail').value;
+    const pass = document.getElementById('regPass').value;
+    try {
+        const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+        await sendEmailVerification(userCred.user);
+        alert("Verification link sent! Check your email.");
+    } catch (e) { alert(e.message); }
+};
 
-// Login as Teacher - simple simulation
-function loginTeacher() {
-  const username = document.getElementById('username').value.trim();
-  if(username === '') {
-    alert('Please enter your username to login as Teacher.');
-    return;
-  }
-  alert('Logged in as Teacher: ' + username);
-  showSection('teacher');
-}
+window.emailVerified = () => {
+    const btn = document.getElementById('verifiedStatusBtn');
+    btn.innerText = "Status: Verified ✅";
+    btn.style.background = "#2e7d32";
+};
 
-// Simulated app download button function
-function downloadApp() {
-  alert('Downloading Fili-QuizMo app...');
-  // Here you can implement actual download logic or redirect
-}
+window.logout = () => {
+    signOut(auth).then(() => {
+        alert("Logged out successfully.");
+        goHome();
+    });
+};
 
-// Logout and return to home
-function logout() {
-  alert('Logging out successful.');
-  goHome();
-}
-
-// Initialize to home when DOM loaded
-document.addEventListener('DOMContentLoaded', () => {
-  goHome();
-});
+window.downloadApp = () => alert("Downloading Fili-QuizMo App...");
